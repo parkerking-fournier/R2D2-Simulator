@@ -1,0 +1,121 @@
+<html>
+	<head>
+		<title>R2-D2 Simulator</title>
+	</head>
+
+	<body bgcolor="gray">
+		<h1>A Simple R2-D2 Voice Simulator </h1>
+		<h2>Parker King-Fournier</h2>
+		<img src="images/r2d2.jpg" alt="R2-D2"/ style="width: 160px;height:200px;"/>
+		<p>Often times the most recognizeable aspects of a favourite movie or television show are the sounds that accompany the work. The world of Star Wars is a perfect example. The Star Wars Universe is home to the distinct sounds of lightsabers, blasters, and various speeding ships that give it its unique brand of original.</p>
+
+		<p>The inspiration to make a seemingly simple simulator for R2-D2 came directly from the importance of the character in my love for the films. Throughout the films, the audience is forced to infer R2-D2's meanings. Often clues to the meaning are hinted as the sounds R2 makes mimick human speech. This inspired me to design a program that would take a recorded sound file, either from a user, or from a pre-existing file, and produce a R2-D2 style replica to the recorded phrase that was similar in pitch, rhythm and volume.</p> 
+		<br>
+		<h2>Goals of the Project </h2>
+
+		<p>Because of the prevalence of digital audio synthesis techniques used in movie and television soundtracks, this project used many of the techniques and methods for synthesis and analysis that were studied over the past months. The purpose of the project is summarized in the following goals:
+		<ul>
+			<li>Analyze both the audio of a speaker and of R2-D2 using sound analysis techniques learned in class</li>
+
+			<li>Gain an understanding of methods of pitch detection</li>
+
+			<li>Gain an understanding of methods of time-frequency analysis</li>
+
+			<li>Improve profficiency in Matlab programming</li>
+
+			<li>Create a program that effectively mimicks R2-D2</li>
+		</ul>
+		<br>
+		<h2>An Overview of the Method </h2>
+		
+		<p>In aiming to create a program that would intake "human audio" and output "R2-D2 audio" I was able to divide the project into 5 distinct steps:</p>
+		<ol type="1">
+  			<li>Intake of Audio</li>
+  			<li>Time-Frequency Analysis</li>
+  			<li>Representation of R2-D2 Sounds</li>
+  			<li>Merging of time-frequency and R2-D2 sounds
+  			<li>Final processing and output</li>
+		</ol>
+		<h3>Intake of Audio</h3>
+		<p>The intake of audio was primarily determined by which software supported the best time frequency analysis. This is explained below. For this reason, the audio file corresponding to the voice is taken in a Max/MSP program that records the frequency and relative amplitude every one-hundredth of a second, and writes the to a text file. The Max patch <a href="files/input.maxpat">input.maxpat</a> is shown in Figure 1.</p>
+		<br>
+		<center>
+			<img src="images/maxpatch.png" alt="Max Patch" style="width:600px;height:500px;">
+			<br>
+			<font size="1">
+			<p>Figure 1</p>
+			<font size = "3">
+		</center>
+		<br>
+		<h3>Time-Frequency Analysis</h3>
+		<p>In order to create R2-D2 sounds that matched the frequency of the input audio, a reliable way of analyzing the frequency over time was necessary. The Harmonic Product Spectrum algorithm, the Short Time Fourier Transform and the Max/MSP <a href = "https://cycling74.com/wiki/index.php?title=fzero~">fzero~</a> object were all explored as options to estimate the fundamental frequency of a sound.</p>
+
+			<div style="margin-left: 1em;">
+			<h4>The Harmonic Product Spectrum</h4>
+			<p>The Harmoninc Product Spectrum (HPS) algorithm is an algorithm that utilizes Fourier Theory to estimate the fundamental frequency of a signal. The algorithm uses the DFT/FFT to calculate the lowest common denominator of the frequency spikes that result from the DFT/FFT: this is in theory the fundamental frequency of the signal.</p>
+			<p>The HPS works in the following way:</p>
+			<ul>
+				<li>Apply a window to the original signal</li>
+				<li>Take the DFT/FFT of the resulting signal</li>
+				<li>Downsample the resulting spectra multiple times, and multiply these together</li>
+			</ul> 
+			<p>The HPS is algorithm is shown in Figure 2:</p>
+			<br>
+			<center>
+				<img src="images/hps.gif" alt="HPS Algorithm" style="background-color:white;">
+				<br>
+				<font size="1">
+				<p>Figure 2</p>
+				<font size="3">
+			</center>
+			<p>For more information on the Harmonic Product Spectrum Algorithm click <a href="http://musicweb.ucsd.edu/~trsmyth/analysis/Harmonic_Product_Spectrum.html">here</a> or <a href="https://ccrma.stanford.edu/~pdelac/154/m154paper.htm">here</a>.</p>
+			<br>
+			<h4>The Short Time Fourier Transfer</h4>
+			<p>The Short Time Fourier Transfer (STFT) uses the DFT/FFT over short sections of the signal to estimate the time-frequency relationship of a signal. In Matlab, the STFT can be easily utilized with the <a href="https://www.mathworks.com/help/signal/ref/spectrogram.html">spectrogram</a> object. Unlike the HPS, the STFT does not calculate the fundamental frequency of the signal.</p>
+			<br>
+			<h4>Fundamental Frequency Estimation in Max/MSP</h4>
+			<p>In Max/MSp there is a standard object called <a href = "https://cycling74.com/wiki/index.php?title=fzero~">fzero~</a> that estimates the fundamental frequency of a signal in real time. It performs multiple layers of wavelet transforms on an incoming signal, comparing the spacing between the peaks in each.</p>
+			</div>
+		<br>
+		<p>Upon testing these three techniques for pitch detection and/or time-frequency anaylsis I found that the HPS provided the most accurate estimation for simple signals, such as a simple note, or a simple R2-D2 sound such as the first half of this simple <a href="wavfiles/whistle1.wav">whistle</a>. The HPS becomes less and less accurate as the audio sample becomes more complicated or shorter. For this reason it was not optimal for analyzing the audio of a speaker.</p>
+		<p>I originally was inclined to use the spectrogram function in Matlab to read the voice input, but it did not prove to be useful in recorded voice as is shown in the spectrogram in of this <a href="wavfiles/Voice_003.wav">voice clip</a> in Figure 3.</p>
+		<br>
+			<center>
+				<img src="images/spectrogram.png" alt="Spectrogram Image" style="width:500px;height:380px;">
+				<br>
+				<font size="1">
+				<p>Figure 3</p>
+				<font size="3">
+			</center>
+		<br>
+		<p>For that reason I decided to use the <a href="matlab/HPS.m">HPS.m</a> algorithm to determine the fundamental frequency of simple R2-D2 whistles that could be later modified in relation to the time-frequency plot of the voice input file, which would be produced via the <a href = "https://cycling74.com/wiki/index.php?title=fzero~">fzero~</a> object in Max/MSP.</p>
+		<h3>R2-D2 Sound Representations - To Synthesize or Not to Synthesize?</h3>
+		<p>Originally, I wanted to synthesize the sounds of R2-D2 using additive synthesis. When I listened to R2-D2 sounds take from the movies I realized that many of the sounds that are characteristic of the robot would be quite hard to synthesize. I decided to try to find a technique to pitch shift the samples.</p>
+		<br>
+		<h3>Merging of Time-Frequency and R2-D2 Sounds</h3>
+		<p>In order to make the R2 sounds produced follow the time-frequency plot of the input file two things need to happen:
+			<ol>
+				<li>The time-frequency plot needs to be shifted into the same general register as the R2-D2 sounds</li>
+				<li>A random R2-D2 sound from library needs to be pitch shifted to the correct pitch</li>
+			</ol>
+		These solutions seemed easy to fix. The tiem frequency data from MAX/Msp was inconsistent, so it was used to create a line of best fit representing the frequencies over time. A scalar could be added to all non-zero values of the frequency best-fit plot to put the original audio file in a range suitable for pitch shifting the R2-D2 sounds to.</p>
+		<p>In order to pitch shift the individual R2-D2 sounds, the fundamental pitch of the small sound was found with the <a href="matlab/HPS.m">HPS.m</a> algorithm was used. Using the <a href="http://labrosa.ee.columbia.edu/matlab/pvoc/">phase vocoder example</a> provided by Dan Ellis, the pitch could be shifted up relatively easily.</p>
+		<br>
+		<h3>Additional Processing</h3>
+		<p>In the max patch shown in Figure 1, the amplitude of the recorded audio over time is also recorded and output to a text file. This was processed into an envelope in Matlab that would be applied to the final signal to more liken the resulting and original sounds.</p>
+		<br>
+		<h2>Challenges Faced Throughout the Project</h2>
+		<h3>The R2-D2 Sounds</h3>
+		<p>As previously mentioned, the sounds of the droid proved difficult to synthesize. Upon first research of the sounds, I discovered that the sound designer Ben Burtt used an analog synthesizer, as well as his own vocalizations processed through other effects (<a href ="https://en.wikipedia.org/wiki/R2-D2#Production">wiki</a>). Because of this synthesis was decided against for the sake of brevity, but would probably produce a better end result.</p>
+		<br>
+		<h3>Pitch Detection and Communication Between Matlab and MAX/Msp</h3>
+		<p>Because of the constraints of the pitch detection methods I tried I was forced to make the program a combination of softwares. This brought to my attention the lack of compatability between Max/MSP and Matlab. Originally, I wanted the project to be one neat package, but that proved harder than orginally thought.</p>
+		<p>The pitch detection of small clips of R2-D2 noises proved hard as well. The HPS algorithm works well for harmonic sounds, such as some of the R2-D2 whistles, but the sounds more akin to barks, or growls, seemed harder to analyze and pitch shifting resulted in weird effects.</p>
+		<br>
+		<h2>Potential Solutions</h2>
+		<p>The output of the program(s) seems to be most effected by the pitch shifting algorithm and the accuracy of the Harmonic Product Spectrum algorithm. This is due to the nontrivial nature of the R2-D2 sounds: they are the result of combinations of analog, digital, voice and other modified sounds that make analysis difficult. A better solution would be to have a library consisting of simple R2-D2 sounds, such as whistles and other similar sounds, that would respond better to the HPS and pitch shifting algorithms</p>
+		<p>A better selection method of R2-D2 sounds may be the use of <a href="http://imtr.ircam.fr/imtr/Corpus_Based_Synthesis">Corpus Based Synthesis</a> to select sounds that match the input sound's characteristics. This may produce better results but would no doubt prove time consuming.</p>
+		<h2>Download</h2>
+		<p>The software in its current state can be downloaded <a href="files/R2D2Simulator.zip" download>here</a>.</p>		
+	</body>
+</html>
